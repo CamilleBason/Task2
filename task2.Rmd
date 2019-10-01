@@ -1,0 +1,80 @@
+---
+title: "Task2"
+author: "BasonCamille"
+date: "26/09/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rvest)
+library(tidyverse)
+library(lubridate)
+
+```
+## Charging the datas
+
+```{r}
+web <- read_html("https://w2.brreg.no/kunngjoring/kombisok.jsp?datoFra=01.01.2019&datoTil=25.09.2019&id_region=100&id_fylke=-+-+-&id_niva1=2&id_bransje1=0") 
+table <- html_nodes(web, xpath = "//table") 
+table <- html_nodes(table, "table")
+table <- html_table(table[[1]])
+```
+
+## Select the datas
+
+```{r}
+data <- table %>% select (X2, X4, X6, X8) %>%
+                  slice(6:2227)
+
+``` 
+
+## Sort by counties
+```{r}
+data <- data %>% mutate(county = "")
+data[c(2:1054),"county"] <- "Nordland"
+data[c(1057:1808),"county"] <- "Troms"
+data[c(1811:2221),"county"] <- "Finnmark"
+
+data <-data[-c(1,1055,1056,1809,1810,2222),]
+
+data$X6 <- as.Date(data$X6, format="%d.%m.%Y")
+
+```
+
+## Create the plot 
+
+```{r}
+data <- data %>% mutate(month = "")
+data$month <- month(data$X6, label=TRUE)
+Nordland <-data %>% filter(county =="Nordland")
+Troms <- data %>% filter (county=="Troms")
+Finnmark <- data %>% filter (county=="Finnmark")
+
+ggplot(data, aes(county)) + 
+    geom_bar(col="blue") + 
+    xlab("Companies") + 
+    ylab("County") + 
+    ggtitle("Number of companies registered per county")
+
+
+ggplot(Nordland, aes(month)) + 
+  geom_bar() + 
+  xlab("Month") + 
+  ylab("Companies") + 
+  ggtitle("Number of companies registered in Nordland by month")
+ggplot(Troms, aes(month)) + 
+  geom_bar() + 
+  xlab("Month") + 
+  ylab("Companies") + 
+  ggtitle("Number of companies registered in Troms by month")
+ggplot(Finnmark, aes(month)) + 
+  geom_bar() + 
+  xlab("Month") + 
+  ylab("Companies") + 
+  ggtitle("Number of companies registered in Finnmark by month")
+
+
+```
+
+
