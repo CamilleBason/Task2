@@ -15,6 +15,7 @@ library(lubridate)
 ## Charging the datas
 
 ```{r}
+#read the data with html
 web <- read_html("https://w2.brreg.no/kunngjoring/kombisok.jsp?datoFra=01.01.2019&datoTil=25.09.2019&id_region=100&id_fylke=-+-+-&id_niva1=2&id_bransje1=0") 
 table <- html_nodes(web, xpath = "//table") 
 table <- html_nodes(table, "table")
@@ -24,6 +25,7 @@ table <- html_table(table[[1]])
 ## Select the datas
 
 ```{r}
+#select only the column with some informations
 data <- table %>% select (X2, X4, X6, X8) %>%
                   slice(6:2227)
 
@@ -31,12 +33,16 @@ data <- table %>% select (X2, X4, X6, X8) %>%
 
 ## Sort by counties
 ```{r}
+# Create a column cunties
 data <- data %>% mutate(county = "")
 data[c(2:1054),"county"] <- "Nordland"
 data[c(1057:1808),"county"] <- "Troms"
 data[c(1811:2221),"county"] <- "Finnmark"
 
+# delete all empty rows
 data <-data[-c(1,1055,1056,1809,1810,2222),]
+
+#Use X6 as date
 
 data$X6 <- as.Date(data$X6, format="%d.%m.%Y")
 
@@ -45,29 +51,35 @@ data$X6 <- as.Date(data$X6, format="%d.%m.%Y")
 ## Create the plot 
 
 ```{r}
+# Create a month column
 data <- data %>% mutate(month = "")
 data$month <- month(data$X6, label=TRUE)
+
+# Create tables by counties
 Nordland <-data %>% filter(county =="Nordland")
 Troms <- data %>% filter (county=="Troms")
 Finnmark <- data %>% filter (county=="Finnmark")
 
+#Plot of all the counties
 ggplot(data, aes(county)) + 
     geom_bar(col="blue") + 
     xlab("Companies") + 
     ylab("County") + 
     ggtitle("Number of companies registered per county")
 
-
+#Plot of Nordland
 ggplot(Nordland, aes(month)) + 
-  geom_bar() + 
+  geom_bar(col="blue") + 
   xlab("Month") + 
   ylab("Companies") + 
   ggtitle("Number of companies registered in Nordland by month")
+#Plot of Troms
 ggplot(Troms, aes(month)) + 
-  geom_bar() + 
+  geom_bar(col="blue") + 
   xlab("Month") + 
   ylab("Companies") + 
   ggtitle("Number of companies registered in Troms by month")
+#Plot of Finnmark
 ggplot(Finnmark, aes(month)) + 
   geom_bar() + 
   xlab("Month") + 
